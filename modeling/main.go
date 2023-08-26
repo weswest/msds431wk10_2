@@ -8,6 +8,8 @@ import (
 	deep "github.com/patrikeh/go-deep"
 	"github.com/patrikeh/go-deep/training"
 	"github.com/petar/GoMNIST"
+
+	images "github.com/weswest/msds431wk10_2/pkg"
 )
 
 const numEpochs = 10
@@ -46,7 +48,7 @@ func produceCSV(trainFull training.Examples, neural *deep.Neural) {
 		if predIdx == trueIdx {
 			accuracy = 1
 		}
-		writer.Write([]string{fmt.Sprintf("%d", i), fmt.Sprintf("%d", trueIdx), fmt.Sprintf("%d", predIdx), fmt.Sprintf("%d", accuracy)})
+		writer.Write([]string{fmt.Sprintf("%d", i+1), fmt.Sprintf("%d", trueIdx), fmt.Sprintf("%d", predIdx), fmt.Sprintf("%d", accuracy)})
 	}
 
 	fmt.Println("CSV file './results/goDNNScores.csv' has been created.")
@@ -58,21 +60,21 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Println("First Train label: ", trainOriginalData.Labels[0])
-	printImage(trainOriginalData.Images[0])
+	images.PrintImage(trainOriginalData.Images[0])
 
 	// This code returns the train and test MNIST.Set types
 	// Set has NRow, NCol, Images ([]RawImage), Labels ([]Label)
 
 	fmt.Println("MNIST Rows: ", trainOriginalData.NRow, testOriginalData.NRow)
 	fmt.Println("MNIST Columns: ", trainOriginalData.NCol, testOriginalData.NCol)
-	xTrainData := convertMNISTForModeling(trainOriginalData.Images)
-	yTrainData := convertLabelsForModeling(trainOriginalData.Labels)
-	xTestData := convertMNISTForModeling(testOriginalData.Images)
-	yTestData := convertLabelsForModeling(testOriginalData.Labels)
-	printShape(xTrainData)
-	printShape(yTrainData)
-	printShape(xTestData)
-	printShape(yTestData)
+	xTrainData := images.ConvertMNISTForModeling(trainOriginalData.Images)
+	yTrainData := images.ConvertLabelsForModeling(trainOriginalData.Labels)
+	xTestData := images.ConvertMNISTForModeling(testOriginalData.Images)
+	yTestData := images.ConvertLabelsForModeling(testOriginalData.Labels)
+	images.PrintShape(xTrainData)
+	images.PrintShape(yTrainData)
+	images.PrintShape(xTestData)
+	images.PrintShape(yTestData)
 
 	trainingSet := training.Examples{}
 	for i := range xTrainData {
@@ -93,9 +95,9 @@ func main() {
 			fmt.Printf("Training Set Response: %v\n", trainingSet[i].Response)
 			fmt.Printf("Training Full Response: %v\n", trainFull[i].Response)
 			fmt.Println("Training Set Input")
-			printInput(trainingSet[i].Input)
+			images.PrintInput(trainingSet[i].Input)
 			fmt.Println("Training Full Input")
-			printInput(trainFull[i].Input)
+			images.PrintInput(trainFull[i].Input)
 		}
 	}
 

@@ -1,4 +1,4 @@
-package main
+package images
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 
 // This is related to GoMNIST
 // Print the image to the console
-func printImage(image GoMNIST.RawImage) {
+func PrintImage(image GoMNIST.RawImage) {
 	scaleFactor := 255.0 / 8.0
 	nRow := 28
 	nCol := 28
@@ -39,7 +39,7 @@ func printImage(image GoMNIST.RawImage) {
 	}
 }
 
-func printInput(input []float64) {
+func PrintInput(input []float64) {
 	nRow := 28
 	nCol := 28
 
@@ -61,7 +61,7 @@ func printInput(input []float64) {
 }
 
 // This takes all of the images and converts them to float64s
-func convertMNISTForModeling(images []GoMNIST.RawImage) [][]float64 {
+func ConvertMNISTForModeling(images []GoMNIST.RawImage) [][]float64 {
 	var floatImages [][]float64
 
 	for _, image := range images {
@@ -75,7 +75,7 @@ func convertMNISTForModeling(images []GoMNIST.RawImage) [][]float64 {
 	return floatImages
 }
 
-func convertLabelsForModeling(labels []GoMNIST.Label) [][]float64 {
+func ConvertLabelsForModeling(labels []GoMNIST.Label) [][]float64 {
 	var floatLabels [][]float64
 	for _, label := range labels {
 		oneHot := make([]float64, 10)
@@ -85,7 +85,7 @@ func convertLabelsForModeling(labels []GoMNIST.Label) [][]float64 {
 	return floatLabels
 }
 
-func printShape(matrix [][]float64) {
+func PrintShape(matrix [][]float64) {
 	rows := len(matrix)
 	cols := 0
 	if rows > 0 {
