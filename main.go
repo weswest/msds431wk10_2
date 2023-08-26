@@ -1,62 +1,34 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
 
 	deep "github.com/patrikeh/go-deep"
 	"github.com/patrikeh/go-deep/training"
 	"github.com/petar/GoMNIST"
 )
 
-func main() {
-	// Load the MNIST dataset
-	train, test, err := GoMNIST.Load("./data")
+const numEpochs = 10
+
+// Function to produce the CSV file
+func produceCSV(trainFull training.Examples, neural *deep.Neural) {
+	// Create or overwrite the CSV file
+	csvFile, err := os.Create("./results/goDNNScores.csv")
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-	fmt.Println("First Train label: ", train.Labels[0])
-	printImage(train.Images[0])
+	defer csvFile.Close()
 
-	// This code returns the train and test MNIST.Set types
-	// Set has NRow, NCol, Images ([]RawImage), Labels ([]Label)
+	writer := csv.NewWriter(csvFile)
+	defer writer.Flush()
 
-	fmt.Println("MNIST Rows: ", train.NRow, test.NRow)
-	fmt.Println("MNIST Columns: ", train.NCol, test.NCol)
-	inputData := convertMNISTForModeling(train.Images)
-	outputData := convertLabelsForModeling(train.Labels)
-	printShape(inputData)
-	printShape(outputData)
+	// Write CSV header
+	writer.Write([]string{"Index", "Label", "LabelPred", "Accuracy"})
 
-	// Define the neural network
-	n := deep.NewNeural(&deep.Config{
-		Inputs:     784,                 // 28x28
-		Layout:     []int{512, 256, 10}, // 3 layers: 2 hidden layers and 1 output layer
-		Activation: deep.ActivationReLU,
-		Mode:       deep.ModeMultiClass,
-		Weight:     deep.NewUniform(0.5, 0.0),
-		Bias:       true,
-	})
-
-	// Train the neural network
-	optimizer := training.NewSGD(0.01, 0.1, 1e-6, true)
-	trainer := training.NewTrainer(optimizer, 50)
-	trainingSet := training.Examples{}
-	for i := range inputData {
-		trainingSet = append(trainingSet, training.Example{Input: inputData[i], Response: outputData[i]})
-	}
-	fmt.Println("Training set length: ", len(trainingSet))
-	training, validation := trainingSet.Split(0.02)
-	fmt.Println("Just about to train")
-	fmt.Println("Training set length after train/valid split: ", len(training))
-	trainer.Train(n, training, validation, 3) // 10 epochs for demonstration
-	fmt.Println("After trainer.Train")
-
-	// Evaluate accuracy on test data
-	testInputData := convertMNISTForModeling(test.Images)
-	testOutputData := convertLabelsForModeling(test.Labels)
-	correct := 0
-	for i, input := range testInputData {
-		pred := n.Predict(input)
+	for i, example := range trainFull {
+		pred := neural.Predict(example.Input)
 		predIdx := 0
 		trueIdx := 0
 		for j, val := range pred {
@@ -64,16 +36,117 @@ func main() {
 				predIdx = j
 			}
 		}
-		for j, val := range testOutputData[i] {
+		for j, val := range example.Response {
+			if val == 1.0 {
+				trueIdx = j
+				break
+			}
+		}
+		accuracy := 0
+		if predIdx == trueIdx {
+			accuracy = 1
+		}
+		writer.Write([]string{fmt.Sprintf("%d", i), fmt.Sprintf("%d", trueIdx), fmt.Sprintf("%d", predIdx), fmt.Sprintf("%d", accuracy)})
+	}
+
+	fmt.Println("CSV file './results/goDNNScores.csv' has been created.")
+}
+func main() {
+	// Load the MNIST dataset
+	trainOriginalData, testOriginalData, err := GoMNIST.Load("./data")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("First Train label: ", trainOriginalData.Labels[0])
+	printImage(trainOriginalData.Images[0])
+
+	// This code returns the train and test MNIST.Set types
+	// Set has NRow, NCol, Images ([]RawImage), Labels ([]Label)
+
+	fmt.Println("MNIST Rows: ", trainOriginalData.NRow, testOriginalData.NRow)
+	fmt.Println("MNIST Columns: ", trainOriginalData.NCol, testOriginalData.NCol)
+	xTrainData := convertMNISTForModeling(trainOriginalData.Images)
+	yTrainData := convertLabelsForModeling(trainOriginalData.Labels)
+	xTestData := convertMNISTForModeling(testOriginalData.Images)
+	yTestData := convertLabelsForModeling(testOriginalData.Labels)
+	printShape(xTrainData)
+	printShape(yTrainData)
+	printShape(xTestData)
+	printShape(yTestData)
+
+	trainingSet := training.Examples{}
+	for i := range xTrainData {
+		trainingSet = append(trainingSet, training.Example{Input: xTrainData[i], Response: yTrainData[i]})
+	}
+
+	train, valid := trainingSet.Split(0.7)
+
+	trainFull := make(training.Examples, len(trainingSet))
+	copy(trainFull, trainingSet)
+
+	// Printing first 10 records of trainingSet
+	// Debug printouts.  Helpful to see what the data looks like
+	print1 := false
+	if print1 {
+		fmt.Println("First 10 records of trainingSet:")
+		for i := 0; i < 10; i++ {
+			fmt.Printf("Training Set Response: %v\n", trainingSet[i].Response)
+			fmt.Printf("Training Full Response: %v\n", trainFull[i].Response)
+			fmt.Println("Training Set Input")
+			printInput(trainingSet[i].Input)
+			fmt.Println("Training Full Input")
+			printInput(trainFull[i].Input)
+		}
+	}
+
+	testSet := training.Examples{}
+	for i := range xTestData {
+		testSet = append(testSet, training.Example{Input: xTestData[i], Response: yTestData[i]})
+	}
+	test := testSet
+
+	neural := deep.NewNeural(&deep.Config{
+		Inputs: len(train[0].Input),
+		// Layout:     []int{32, 10},
+		Layout:     []int{32, 64, 10},
+		Activation: deep.ActivationReLU,
+		Mode:       deep.ModeMultiClass,
+		Weight:     deep.NewNormal(0.6, 0.1), // slight positive bias helps ReLU
+		Bias:       true,
+	})
+
+	//trainer := training.NewTrainer(training.NewSGD(0.01, 0.5, 1e-6, true), 1)
+	//	trainer := training.NewBatchTrainer(training.NewAdam(0.02, 0.9, 0.999, 1e-8), 1, 200, 8)
+	trainer := training.NewBatchTrainer(training.NewAdam(0.005, 0.9, 0.999, 1e-8), 1, 200, 8)
+
+	fmt.Printf("training: %d, val: %d, test: %d\n", len(train), len(valid), len(test))
+
+	// trainer.Train(neural, train, valid, 500)
+	trainer.Train(neural, train, valid, numEpochs)
+
+	// Calculate test accuracy
+	testCorrect := 0
+	for _, example := range test {
+		pred := neural.Predict(example.Input)
+		predIdx := 0
+		trueIdx := 0
+		for j, val := range pred {
+			if val > pred[predIdx] {
+				predIdx = j
+			}
+		}
+		for j, val := range example.Response {
 			if val == 1.0 {
 				trueIdx = j
 				break
 			}
 		}
 		if predIdx == trueIdx {
-			correct++
+			testCorrect++
 		}
 	}
-	accuracy := float64(correct) / float64(len(testInputData))
-	fmt.Printf("Accuracy: %f\n", accuracy)
+	testAccuracy := float64(testCorrect) / float64(len(test)) * 100
+	fmt.Printf("Test Accuracy: %.2f%%\n", testAccuracy)
+
+	produceCSV(trainFull, neural)
 }

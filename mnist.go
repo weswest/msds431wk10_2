@@ -39,6 +39,27 @@ func printImage(image GoMNIST.RawImage) {
 	}
 }
 
+func printInput(input []float64) {
+	nRow := 28
+	nCol := 28
+
+	for i := 0; i < nRow; i++ {
+		for j := 0; j < nCol; j++ {
+			// Get the pixel value at the current position
+			pixel := input[i*nCol+j]
+
+			// Print a space if the pixel value is close to 0, otherwise print a "#"
+			if pixel < 128 {
+				fmt.Print(" ")
+			} else {
+				fmt.Print("#")
+			}
+		}
+		// Start a new line after each row
+		fmt.Println()
+	}
+}
+
 // This takes all of the images and converts them to float64s
 func convertMNISTForModeling(images []GoMNIST.RawImage) [][]float64 {
 	var floatImages [][]float64
