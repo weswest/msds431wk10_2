@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
 
@@ -11,8 +12,6 @@ import (
 
 	images "github.com/weswest/msds431wk10_2/pkg"
 )
-
-const numEpochs = 10
 
 // Function to produce the CSV file
 func produceCSV(trainFull training.Examples, neural *deep.Neural) {
@@ -54,6 +53,21 @@ func produceCSV(trainFull training.Examples, neural *deep.Neural) {
 	fmt.Println("CSV file './results/goDNNScores.csv' has been created.")
 }
 func main() {
+
+	// Define and parse the numEpochs flag
+	numEpochsPtr := flag.Int("epochs", 500, "number of epochs for training")
+	flag.Parse()
+
+	// Check if the provided value is non-numeric or out of range
+	if *numEpochsPtr <= 0 {
+		fmt.Println("Warning: Invalid value for numEpochs. Defaulting to 500.")
+		*numEpochsPtr = 500
+	}
+
+	// Print the message
+	fmt.Println("Dense DNN Being Trained (784 pixels --> 32 nodes --> 64 nodes --> 10 nodes)")
+	fmt.Printf("%d Epochs of training, no early stopping\n", *numEpochsPtr)
+
 	// Load the MNIST dataset
 	trainOriginalData, testOriginalData, err := GoMNIST.Load("./data")
 	if err != nil {
@@ -124,7 +138,7 @@ func main() {
 	fmt.Printf("training: %d, val: %d, test: %d\n", len(train), len(valid), len(test))
 
 	// trainer.Train(neural, train, valid, 500)
-	trainer.Train(neural, train, valid, numEpochs)
+	trainer.Train(neural, train, valid, *numEpochsPtr)
 
 	// Calculate test accuracy
 	testCorrect := 0
