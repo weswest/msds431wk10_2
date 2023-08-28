@@ -249,12 +249,13 @@ My ingoing approach was to find a go package that was natively equipped to produ
 
 I did google searches to try go get a list of repositories to explore, and then I cranked through them one by one to see if they could fit.
 
-As shown in the tick-tock below, I went deep on github.com/LdDl/cnns, but ultimately failed to get the code to work.  I then restarted the process trying to find a package that could support deep neural network modeling and landed on go-deep.
+As shown in the tick-tock below, I went deep on github.com/LdDl/cnns, but ultimately failed to get the code to work.  I faced the same issue with gorgonia.  I then restarted the process trying to find a package that could support deep neural network modeling and landed on go-deep.
 
 * https://github.com/sjwhitworth/golearn.  Didn't apparently use convolutional neural networks
 * https://github.com/galeone/tfgo.  Very promising, but when I got into the weeds it didn't appear like I could build convolutional neural networks at the level of granularity I was trying to
 * https://github.com/TrizlyBear/PWS.  I looked into this briefly and it seemed like it had the building blocks necessary but that it would be a lot of work to get a convolutional neural network kicked off
 * https://github.com/LdDl/cnns.  This seemed like it would work when I was reading the github, but key pieces of the example code wouldn't work.  This package had a pretty rich example of how to build a convolutional neural network on the MNIST database, so I gravitated to it since a lot could've been lift-and-dropped.  Unfortunately, as soon as I made any modifications to the code the models stopped working.  Additionally, the model development code had no native support for data segmentation (train v validate) and relatively little documentation on how to apply a trained model to an out of sample dataset.  I also faced a bug where I couldn't access the full training dataset after segmenting it into the train/validate subsets, even when I re-imported from scratch.  Seeing as it was a requirement of the assignment to run the trained model on the full dataset, this was ultimately a dealbreaker.  The fact that I was running a convolutional neural network on my non-GPU laptop slowed everything down too
+* https://github.com/gorgonia/gorgonia.  This is probably the gold standard of all of the different packages I looked at, at least in terms of sophistication of offering.  Unfortunately, the code didn't work.  The tutorial was out of date and key pieces had broken.  Further, it was fiddly in ways I wasn't expecting so doing any work to adjust the convolutional neural network resulted in the entire codebase failing in hard-to-diagnose ways.
 * https://github.com/patrikeh/go-deep.  This is what I ultimately used for creating a dense deep neural network.  I abandoned the convolutional approach, which is unfortunate but sometimes time pressures mean you need to cut your losses.  This package has a lot of activity, including some commits earlier this year, plus it had native tools for segmenting the data into train / validate, and had built-in methods for producing performance metrics after each training epoch.
 
 ### Develop a digit classification model using a Go-based neural network (preferably a convolutional neural network). Ensure that vou emplov data science best practices in dividing the initial training data into training and validation sets and using the test data as a hold-test dataset for evaluating the constructed model.
@@ -298,7 +299,7 @@ It's unclear whether this is referencing the repos used in this assignment, or t
 ##### Class Assignments
 * [Week 2](https://github.com/weswest/msds431wk2).  Prove that you can create an OLS regression in Go that is functionally identical to the OLS results from R and Python
 * [Week 3](https://github.com/weswest/msds431wk3).  Build a static website using Hugo, which relies on go (note: [my website](https://msds431wk3wes.netlify.app/))
-* [Week 4](https://github.com/weswest/msds431wk4).  Replicate the .describe() functionality of python
+* [Week 4](https://github.com/weswest/msds431wk4).  Replicate the .describe() functionality of python, in go
 * [Week 5](https://github.com/weswest/msds431wk5).  Build a web scraper using go
 * [Week 6](https://github.com/weswest/msds431wk6).  Size out performance improvements from using go's concurrency model
 * [Week 7](https://github.com/weswest/msds431wk7).  Using the isolation forest algorithm as an example, figure out how to find go packages that enable common Python / R functionality
